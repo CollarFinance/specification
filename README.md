@@ -1,5 +1,5 @@
 # specification
-Specification of Collar Finnace
+Specification for Collar Finance
 
 # Release Version
 
