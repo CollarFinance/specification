@@ -3,4 +3,4 @@ Specification for Collar Finance
 
 # Release Version
 
-- [Draft](https://github.com/CollarFinance/specification/releases/tag/draft)
+- [Collar Core v0.1](https://github.com/CollarFinance/specification/releases/tag/v0.1)
