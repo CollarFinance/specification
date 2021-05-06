@@ -1,7 +1,7 @@
 ---
-title: 'Collar: Another Option for Lending'
-author: 'Collar Development'
-date: '2020-04-28 [draft version]'
+title: 'Collar: Optimized Stablecoin Lending'
+author: 'Collar Development Team'
+date: 'Version 0.1 May 2021'
 ---
 # Introduction
 
@@ -19,7 +19,7 @@ Decentralized money markets centered on asset-backed cryptocurrencies form the f
   
     Borrowers must accept greater liquidation risk to achieve greater capital efficiency.
 
-In this paper we introduce a decentralized lending protocol, *Collar*, which establishes money markets for pegged assets, providing lending and borrowing functions with algorithmically set interest rates based on supply and demand.
+These challenges are present due to the general (asset-agnostic) nature of the protocols. In this paper we introduce a decentralized lending protocol, Collar, which establishes money markets optimized for pegged assets, providing lending and borrowing functions with fixed interest rates based on supply and demand.
 
 The name Collar is inspired by the *collar* option strategy^[<https://en.wikipedia.org/wiki/Collar_(finance)>]: This flexible hedging option is created by holding the underlying, buying an out of the money put option, and selling an out of the money call option. 
 This strategy limits the range of possible positive or negative returns on the underlying to a specified range. 
@@ -30,7 +30,7 @@ The core design goals of Collar are:
 - stable interest (no uncertainty)
 - stable collateral (no liquidation)
 
-By meeting these design goals, Collar overcomes the previously discussed challenges.
+Collar is able to meet these goals by optimizing the lending and borrowing mechanism for pegged assets, and thus is able to overcome the previously discussed challenges.
 
 ## Collar Features
 
@@ -38,14 +38,14 @@ The Collar protocol establishes money markets that provide attractive features t
 
 ### For Lenders
 
-- fixed interest
+- fixed supply interest
 - low risk exposure
 - liquidity providing rewards
-- no liquidity frozen
+- no frozen liquidity
 
 ### For Borrowers
 
-- fixed interest
+- fixed borrow interest
 - no liquidation risk
 - 100% capital utilization
 
@@ -65,7 +65,7 @@ $$
 
 Here, $\mathbb{A}$ and $\mathbb{C}$ represent the domains of all accounts and all types of tokens, respectively. In this paper, an *account* is a blockchain wallet address^[<https://en.wikipedia.org/wiki/Ethereum#Addresses>] and a *token* is a fungible token^[<https://ethereum.org/en/developers/docs/standards/tokens/erc-20/>]. There is a unique account called the *Collar pool*, denoted $a_{\mathtt{pool}}$, which functions as the lending pool and is involved in every operation in the Collar core protocol. Any balance in the Collar pool $s_{c,a_{\mathtt{pool}}}$ is referred to as a *reserve*. 
 
-$\mathbf{S}$ can also be expressed by the following shorthand notation (note: $\mathbb{R}_\mathtt{0}$ is required because balance must always be a non-negative number):
+$\mathbf{S}$ can also be expressed by the following shorthand notation (note $\mathbb{R}_\mathtt{0}$ is required because balance must always be a non-negative number):
 
 $$
 \mathbf{S} = (s_{c,a}) \in \mathbb{R}_\mathtt{0}^{|\mathbb{C}| \times |\mathbb{A}|} 
@@ -73,7 +73,7 @@ $$
 
 The Collar core protocol can be represented as a finite state machine^[<https://en.wikipedia.org/wiki/Finite-state_machine>] with the input alphabet, state set, and initial state all being obvious, so that only the state transition function need be described here.
 
-Let $\mathbf{S}_t$ denotes the state $\mathbf{S}$ at time $t$ with $t \in \mathbb{N}_{\mathtt{0}}$ and fix a constant expiry time $t_{\mathtt{expiry}}$. $t_{\mathtt{expiry}}$ will determine the actions available to a user interacting with the Collar core protocol at any time $\mathbf{S}_t$: before $t_{\mathtt{expiry}}$, lenders and borrowers are able to perform lending and borrowing functions, while after $t_{\mathtt{expiry}}$ lenders are able to collect repaid tokens/underlying collateral. $f$ is used to denote the Collar operation and $g$ is used to denote a non-Collar operation. Details of $g$ will not be described in this paper because it is not related to the Collar core protocol, but $g$ should always meet some basic requirements (e.g., $g$ could be required to satisfy the ERC-20^[<https://ethereum.org/en/developers/docs/standards/tokens/erc-20/>] token standard). The state transition function shown below indicates the next state $\mathbf{S}_{t+1}$ can be either the previous state $\mathbf{S}_t$, a new state created by the Collar operation, or a new state determined by *g*, depending on which action is taken by the user:
+Let $\mathbf{S}_t$ denotes the state $\mathbf{S}$ at time $t$ with $t \in \mathbb{N}_{\mathtt{0}}$ and fix a constant expiry time $t_{\mathtt{expiry}}$. $t_{\mathtt{expiry}}$ will determine the actions available to a user interacting with the Collar core protocol at any time $t$: before $t_{\mathtt{expiry}}$, lenders and borrowers are able to perform lending and borrowing functions, while after $t_{\mathtt{expiry}}$, lenders are able to collect repaid tokens/underlying collateral. $f$ is used to denote the Collar operation and $g$ is used to denote a non-Collar operation. Details of $g$ will not be described in this paper because it is not related to the Collar core protocol, but $g$ should always meet some basic requirements (e.g., $g$ could be required to satisfy the ERC-20^[<https://ethereum.org/en/developers/docs/standards/tokens/erc-20/>] token standard). The state transition function shown below indicates the next state $\mathbf{S}_{t+1}$ can be either the previous state $\mathbf{S}_t$, a new state created by the Collar operation, or a new state determined by *g*, depending on which action is taken by the user:
 
 $$
 \mathbf{S}_{t+1} = \mathbf{S}_t \lor f(\mathbf{S}_t) \lor g(\mathbf{S}_t)
@@ -100,7 +100,7 @@ $$
 f_{\mathtt{+}}(\mathbf{S}_t) \in \left \{{f_{\mathtt{BurnColl}}{(\mathbf{S}_t, a, n)}\: |\: a \in \mathbb{A}, c \in \mathbb{C}}\right \}
 $$
 
-This means if it is before expiry time $t_{\mathtt{expiry}}$, there are four operations (`MintDual`, `MintColl`, `BurnDual`, and `BurnCall`) that can be executed by account $a$ with a parameter $n \in \mathbb{R}_{\mathtt{0}}$, otherwise only the operation `BurnColl` can be executed.
+This means if it is before expiry time $t_{\mathtt{expiry}}$, then there are four operations (`MintDual`, `MintColl`, `BurnDual`, and `BurnCall`) that can be executed by account $a$ with a parameter $n \in \mathbb{R}_{\mathtt{0}}$, otherwise only the operation `BurnColl` can be executed.
 
 Before describing the five operations (`MintDual`, `MintColl`, `BurnDual`, `BurnCall` and `BurnColl`), 3 auxillary operations will be defined first. In what follows, $\mathbf{J}^{c, a_{\mathtt{s}}}$ denotes a single-entry matrix^[<https://en.wikipedia.org/wiki/Single-entry_matrix>].
 
@@ -140,7 +140,7 @@ $$
 f_{\mathtt{MintDual}}{(\mathbf{S}, a, n)} = \mathbf{S}^{a \overset{n}{\underset{c_{\mathtt{bond}}}{\longrightarrow}} a_{\mathtt{pool}},  \overset{n}{\underset{c_{\mathtt{call}}}{\longrightarrow}} a,  \overset{n}{\underset{c_{\mathtt{coll}}}{\longrightarrow}} a}
 $$
 
-Account $a$ can use this operation to borrow via the following mechanism. After the `MintDual` operation, account *a* can sell the received $c_{\mathtt{coll}}$ tokens for amount $n_{*}$ of $c_{\mathtt{want}}$ tokens. $n_{*}$ should be slightly less than $n$ because $n - n_{*}$ is the borrowing interest. Later, account *a* can burn amount $n$ of $c_{\mathtt{call}}$ tokens and pay amount $n$ of $c_{\mathtt{want}}$ tokens to the Collar pool $a_{\mathtt{pool}}$ and receive its initial deposit amount $n$ of $c_{\mathtt{bond}}$ tokens back via the `BurnCall` operation before expiry time $t_{\mathtt{expiry}}$.
+Account $a$ can use this operation to borrow via the following mechanism. After the `MintDual` operation, account *a* can sell the received $c_{\mathtt{coll}}$ tokens for amount $n_{*}$ of $c_{\mathtt{want}}$ tokens. $n_{*}$ should be slightly less than $n$ because $n - n_{*}$ is the borrow interest. Later, account *a* can burn amount $n$ of $c_{\mathtt{call}}$ tokens and pay amount $n$ of $c_{\mathtt{want}}$ tokens to the Collar pool $a_{\mathtt{pool}}$ to receive its initial deposit amount $n$ of $c_{\mathtt{bond}}$ tokens back via the `BurnCall` operation before expiry time $t_{\mathtt{expiry}}$.
 
 ## MintColl
 
@@ -166,11 +166,11 @@ $$
 f_{\mathtt{BurnDual}}{(\mathbf{S}, a, n)} = \mathbf{S}^{a \overset{n}{\underset{c_{\mathtt{call}}}{\longrightarrow}}, a \overset{n}{\underset{c_{\mathtt{coll}}}{\longrightarrow}},a_{\mathtt{pool}} \overset{n}{\underset{c_{\mathtt{bond}}}{\longrightarrow}} a}
 $$
 
-Borrowers can use this operation to their benefit because the price of token $c_{\mathtt{coll}}$ should always be slightly less than token $c_{\mathtt{want}}$, and if the borrower repays much earlier than the expiry time $t_{\mathtt{expiry}}$ then it can sell $c_{\mathtt{want}}$ tokens for $c_{\mathtt{coll}}$ tokens and redeem them.
+Borrowers can use this operation to their benefit because the price of token $c_{\mathtt{coll}}$ should always be slightly less than token $c_{\mathtt{want}}$, and if the borrower repays much earlier than the expiry time $t_{\mathtt{expiry}}$, then it can sell $c_{\mathtt{want}}$ tokens for $c_{\mathtt{coll}}$ tokens and redeem them.
 
 ## BurnCall
 
-`BurnCall` is the repay operation. Using `BurnCall`, account $a$ burns amount $n$ of $c_{\mathtt{call}}$ tokens and pays amount $n$ of $c_{\mathtt{want}}$ tokens to the Collar pool $a_{\mathtt{pool}}$, then account *a* receives amount $n$ of $c_{\mathtt{bond}}$ tokens:
+`BurnCall` is the repay operation. Using `BurnCall`, account $a$ burns amount $n$ of $c_{\mathtt{call}}$ tokens and pays amount $n$ of $c_{\mathtt{want}}$ tokens to the Collar pool $a_{\mathtt{pool}}$, and then account *a* receives amount $n$ of $c_{\mathtt{bond}}$ tokens:
 
 $$
 f_{\mathtt{BurnCall}}{(\mathbf{S}, a, n)} = \mathbf{S}^{a \overset{n}{\underset{c_{\mathtt{call}}}{\longrightarrow}}, a \overset{n}{\underset{c_{\mathtt{want}}}{\longrightarrow}} a_{\mathtt{pool}},a_{\mathtt{pool}} \overset{n}{\underset{c_{\mathtt{bond}}}{\longrightarrow}} a}
@@ -191,19 +191,55 @@ $\mathbf{J}^{1, c_{\mathtt{coll}}}$ is still the single entry matrix^[<https://e
 
 ## Call Token
 
-The token $c_{\mathtt{call}}$ is the right of repayment for borrowers before expiry. It is just like buying a call option for token $c_{\mathtt{bond}}$.
+The token $c_{\mathtt{call}}$ is the right of repayment for borrowers before $t_{\mathtt{expiry}}$. It is just like buying a call option for token $c_{\mathtt{bond}}$.
 
-Thus, after expiry the token $c_{\mathtt{call}}$ will be useless and before expiry the token $c_{\mathtt{call}}$ can be an insurance for both token $c_{\mathtt{bond}}$ and token $c_{\mathtt{want}}$ because the token $c_{\mathtt{call}}$ can always choose the higher price one between token $c_{\mathtt{bond}}$ and token $c_{\mathtt{want}}$.
+Thus, after $t_{\mathtt{expiry}}$ the $c_{\mathtt{call}}$ token will be useless and before $t_{\mathtt{expiry}}$ the $c_{\mathtt{call}}$ token is insurance for both the $c_{\mathtt{bond}}$ token and $c_{\mathtt{want}}$ token. This is because the $c_{\mathtt{call}}$ token gives its holder the right to choose the higher priced one between $c_{\mathtt{bond}}$ and $c_{\mathtt{want}}$. Keeping these facts in mind, it's clear that if both the $c_{\mathtt{bond}}$ and $c_{\mathtt{want}}$ tokens remain pegged, then:
+
+* the price of $c_{\mathtt{call}}$ should always be close to 0.
+* the price of $c_{\mathtt{call}}$ should be greater for $c_{\mathtt{bond}}$/$c_{\mathtt{want}}$ pairs with low confidence in the pegs than in pairs with high confidence.
+* the price of $c_{\mathtt{call}}$ should decrease over time until reaching 0 at $t_{\mathtt{expiry}}$.
+
+If the $c_{\mathtt{bond}}$ and $c_{\mathtt{want}}$ do not both remain pegged, then at $t_{\mathtt{expiry}}$:
+
+* if $\textrm{price of }c_{\mathtt{bond}} < \textrm{price of }c_{\mathtt{want}}$, then $\textrm{price of }c_{\mathtt{call}} = 0$.
+* if $\textrm{price of }c_{\mathtt{bond}} > \textrm{price of }c_{\mathtt{want}}$, then $\textrm{price ratio }\frac{c_{\mathtt{call}}}{c_{\mathtt{bond}}}\: +\: \textrm{price ratio }\frac{c_{\mathtt{want}}}{c_{\mathtt{bond}}} = 1$, otherwise an arbitrage opportunity exists.
 
 ## Coll Token
 
-The token $c_{\mathtt{coll}}$ is the right of liquidation for lenders after expiry. It is just like writing a put option for token $c_{\mathtt{bond}}$.
+The token $c_{\mathtt{coll}}$ is the right of liquidation for lenders after $t_{\mathtt{expiry}}$. It is just like writing a put option for token $c_{\mathtt{bond}}$.
 
-Thus, before expiry the price of token $c_{\mathtt{coll}}$ represents the borrowing interest and after expiry the price would be around the price of token $c_{\mathtt{want}}$ if both token $c_{\mathtt{bond}}$ and token $c_{\mathtt{want}}$ pegs well.
+Before $t_{\mathtt{expiry}}$, the price of token $c_{\mathtt{coll}}$ acts as the borrow interest. If the $c_{\mathtt{bond}}$ and $c_{\mathtt{want}}$ tokens remain pegged, then:
 
-# Conclusion
+* the price of $c_{\mathtt{coll}}$ should always be slightly less than the price of $c_{\mathtt{want}}$.
+* the price of $c_{\mathtt{coll}}$ should increase over time until reaching the price of $c_{\mathtt{want}}$ at $t_{\mathtt{expiry}}$.   
 
-To be completed.
+If the $c_{\mathtt{bond}}$ and $c_{\mathtt{want}}$ tokens do not both remain pegged, then at $t_{\mathtt{expiry}}$:
+
+* if $\textrm{price of }c_{\mathtt{bond}} < \textrm{price of }c_{\mathtt{want}}$, then $\textrm{price ratio }\frac{c_{\mathtt{coll}}}{c_{\mathtt{want}}} = \textrm{price ratio }\frac{c_{\mathtt{bond}}}{c_{\mathtt{want}}}$,
+* if $\textrm{price of }c_{\mathtt{bond}} > \textrm{price of }c_{\mathtt{want}}$, then $\textrm{price ratio }\frac{c_{\mathtt{coll}}}{c_{\mathtt{want}}} = 1$,
+
+otherwise an arbitrage opportunity exists.
+
+There are several market forces that keep the price ratio $\frac{c_{\mathtt{coll}}}{c_{\mathtt{want}}}$ in check. Firstly, if $\textrm{price ratio }\frac{c_{\mathtt{coll}}}{c_{\mathtt{want}}} > 1$, then this can be arbitraged by using `MintColl` to swap between $c_{\mathtt{coll}}$ and $c_{\mathtt{want}}$ as previously mentioned. If $\textrm{price ratio }\frac{c_{\mathtt{coll}}}{c_{\mathtt{want}}} \ll 1$, then:
+
+* lenders will take advantage of the high interest rate and buy more $c_{\mathtt{coll}}$.
+* borrowers holding $c_{\mathtt{call}}$ and $c_{\mathtt{want}}$ tokens will take advantage of the interest rate being higher than when they borrowed and buy $c_{\mathtt{coll}}$ to use to redeem using `BurnDual` and receive their $c_{\mathtt{bond}}$ tokens.  
+
+# Summary
+
+
+* Collar is a lending protocol that creates money markets. It does this via a decentralized mechanism that is able to have an elegant, simple design due to the expectation of the protocol primarily being used for lending and borrowing pegged assets.
+* Collar acts as insurance for borrowers from de-pegs for both the asset they borrow and the one they deposit as collateral (though not both at the same time).
+* Borrowers pay a fixed interest rate and their collateral cannot be liquidated until after the expiry time. 
+* Lenders earn a fixed, predictable interest rate and can withdraw their assets at any time.
+* After the expiry time, lenders receive both the repaid and collateral assets in proportions determined by the amounts repaid and defaulted by borrowers. 
+
+\ 
+
+\ 
+
+\ 
+
 
 # Appendix
 
